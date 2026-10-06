@@ -62,8 +62,8 @@ $bin = (Resolve-Path "<本 SKILL.md 所在目录>\bin").Path
 | `--add <路径> <打开密码> [编辑密码]` | 录入 / 覆盖一条记录；`-` 表示该把密码留空 |
 | `--remove <路径>`（别名 `--delete`） | 删除记录（**不动磁盘上的表格文件**），幂等 |
 | `--list` | 列出密码库里所有记录 |
-| `--test <路径>` | 用库里存的密码打开验证一次 |
-| `--test-all` | 逐条验证所有记录 |
+| `--test <路径>` | 核对库里存的密码对不对（**默认离线，不启动 Excel/WPS**） |
+| `--test-all` | 逐条核对所有记录（同样优先离线，因此很快） |
 | `--engine [wps\|excel]` | 查看或设置使用的办公软件 |
 | `--install` / `--uninstall` / `--assoc` / `--restore` | 安装 / 卸载 / 只接管 / 只还原关联 |
 | `--edit <路径>` / `--readonly <路径>` | 显式以编辑 / 只读方式打开 |
@@ -84,14 +84,19 @@ $bin = (Resolve-Path "<本 SKILL.md 所在目录>\bin").Path
 ```
 
 关键字段：`--add/--remove` → `action`、`removed`；`--list` → `count`、`entries`；
-`--test` → `result`（`ok | bad_open_password | unverified_edit | unavailable`）；
+`--test` → `result`（`ok | open_password_ok | bad_open_password | bad_edit_password | unavailable`）；
 `--test-all` → `total_tested`、`passed`、`failed`、`unverified`、`bad_paths`。
+
+- `ok`：打开密码与编辑密码都核对通过；`open_password_ok`：打开密码通过、编辑密码这次没验（不算错）；
+- `bad_open_password` / `bad_edit_password`：对应那把密码不正确；`unavailable`：环境原因未能验证。
 
 ## 已知坑
 
-- **只有真打开表格才需要 Office**：`--test` / `--test-all` 会真启动 WPS / Excel（约 1~4 秒）；
-  `--add` / `--list` / `--remove` / `--install` / `--engine` 只读写本地记录，毫秒级、不启动办公软件。
-- **批量录入就别逐条测**：先 `--add` 批量写库，再单独 `--test-all` 复查。一条条 `--test` 会反复启停 Office，很慢。
+- **`--test` 不要求能打开文件，只核对密码对不对**：0.1.2 起默认**离线核对**——直接解析
+  文件里的密码校验信息（打开密码看加密头、编辑密码看 `xl/workbook.xml` 的 `fileSharing`），
+  **毫秒级、不启动 Office、不占用文件**。所以「文件被占用 / 云盘占位」不会再被误判成密码错。
+- 只有极少数「加密包里的内容离线解不开」的表，才会短暂启动一次 WPS / Excel 补验。
+- **批量录入就别逐条测**：先 `--add` 批量写库，再单独 `--test-all` 复查；现在测试本身很快。
 - **PowerShell 5.1 的 `>` 重定向**：对 `opener.exe`（GUI 子系统）会写出空文件；改用 `opener-cli.exe`，或写成 `... | Out-File`。
 - **密码会出现在命令行里**：`--add` 的密码明文可见于进程列表 / 脚本历史。敏感场景从环境变量或凭据库读取，或在 GUI 设置窗口手工录入。
 - **换账户 / 换机器读不到密码**：DPAPI 按当前用户加密，换 Windows 用户或重装系统需重录。

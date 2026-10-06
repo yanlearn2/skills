@@ -48,8 +48,8 @@ opener.exe --uninstall      :: 还原关联、清理快捷方式（等价于 --r
 | `opener --add <路径> <打开密码> [编辑密码]` | 录入/覆盖一条记录；`-` 表示该把密码留空 |
 | `opener --remove <路径>`（别名 `--delete`） | 删除记录（**不动磁盘上的表格文件**），幂等 |
 | `opener --list` | 列出密码库里所有记录 |
-| `opener --test <路径>` | 用库里存的密码，打开表格验证一次 |
-| `opener --test-all` | 逐条验证库里所有记录 |
+| `opener --test <路径>` | 用库里存的密码验证一次（**默认离线核对，不启动 Excel/WPS**） |
+| `opener --test-all` | 逐条验证库里所有记录（同样优先离线核对，因此很快） |
 | `opener --engine [wps\|excel]` | 查看或设置使用的办公软件 |
 | `opener --install` / `--uninstall` | 安装 / 卸载 |
 | `opener --assoc` / `--restore` | 只接管 / 只还原文件关联 |
@@ -75,6 +75,10 @@ opener.exe --uninstall      :: 还原关联、清理快捷方式（等价于 --r
 | `0` | 成功；`--test` 表示密码验证通过 |
 | `1` | 运行错误：文件不存在、I/O 失败、环境问题、未能确认 |
 | `2` | 用法错误；或 `--test`/`--test-all` 发现**密码不正确** |
+
+> 从 0.1.2 起，`--test` **不要求能打开文件，只核对密码对不对**：绝大多数情况直接
+> 解析文件内的密码校验信息（毫秒级、不启动办公软件）。只有「编辑密码藏在加密内容里」
+> 这种表才会短暂启动一次套件补验。所以「打不开」不再是判定密码错误的前提。
 
 `--remove` 对「记录本就不存在」返回 `0`（幂等），方便脚本重复执行。
 
@@ -114,8 +118,12 @@ opener-cli.exe --json --list
 | --- | --- |
 | `--add` / `--remove` | `{"ok":true,"action":"add\|remove","path":"...","removed":true\|false}` |
 | `--list` | `{"ok":true,"count":N,"entries":[{"path","has_open_password","has_edit_password","open_editable","stored_passwords"}]}` |
-| `--test` | `{"ok":bool,"path":"...","result":"ok\|bad_open_password\|unverified_edit\|unavailable","message":"..."}` |
+| `--test` | `{"ok":bool,"path":"...","result":"ok\|open_password_ok\|bad_open_password\|bad_edit_password\|unavailable","message":"..."}` |
 | `--test-all` | `{"ok":bool,"total_tested","passed","failed","unverified","bad_paths":[...],"entries":[{"path","result"}]}` |
+
+`result` 取值含义：`ok` 打开密码与编辑密码都核对通过；`open_password_ok` 打开密码通过、
+编辑密码这次没验（不算错）；`bad_open_password` / `bad_edit_password` 对应那把密码不正确；
+`unavailable` 环境原因未能验证。
 | `--version` / `--help` | `{"ok":true,"name":"opener","version":"...", ...}` |
 
 在脚本里解析（PowerShell）：
