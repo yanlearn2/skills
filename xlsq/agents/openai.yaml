@@ -1,0 +1,4 @@
+interface:
+  display_name: "xlsq"
+  short_description: "把 xlsx 当表跑 SQL：加密文件、工作表正则、正则清洗、导出报表"
+  default_prompt: "用 xlsq 查询这份 xlsx：先列出工作表与列名，再按条件筛选并导出结果"
