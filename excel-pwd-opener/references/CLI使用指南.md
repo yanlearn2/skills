@@ -124,6 +124,11 @@ opener-cli.exe --json --list
 `result` 取值含义：`ok` 打开密码与编辑密码都核对通过；`open_password_ok` 打开密码通过、
 编辑密码这次没验（不算错）；`bad_open_password` / `bad_edit_password` 对应那把密码不正确；
 `unavailable` 环境原因未能验证。
+
+> 关于 `bad_edit_password`：只有当表格**确实设了「修改权限密码」**时才可能出现。
+> 如果表格没设该密码，即使你传了编辑密码，结果也是 `ok`，`message` 会明确写
+> 「这个表格没有设置编辑密码，你填的编辑密码在这份文件里用不上」——这是正常提示，不是错误。
+
 | `--version` / `--help` | `{"ok":true,"name":"opener","version":"...", ...}` |
 
 在脚本里解析（PowerShell）：
