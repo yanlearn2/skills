@@ -1,0 +1,4 @@
+interface:
+  display_name: "excel-pwd-opener"
+  short_description: "加密 Excel 自动填密码打开（双击即开，命令行可批量录入与验证）"
+  default_prompt: "用 excel-pwd-opener 处理这份加密表格：先看 --list 里有没有记录，没有就 --add 录入并存好密码，再 --test 确认能打开"
